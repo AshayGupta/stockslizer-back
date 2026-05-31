@@ -4,19 +4,46 @@ import Parser from 'rss-parser';
 
 @Injectable()
 export class NewsService {
-  private parser = new Parser();
+  private parser = new Parser({
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0.0.0 Safari/537.36",
+      "Accept":
+        "application/rss+xml, application/xml, text/xml;q=0.9,*/*;q=0.8",
+    },
+    timeout: 10000,
+  });
 
   async getGoogleNews(symbol: string) {
     const url = `https://news.google.com/rss/search?q=${symbol}`;
+    
     const feed = await this.parser.parseURL(url);
+    console.log('Google News Feed:', feed);
 
     return feed.items.map((item) => ({
       title: item.title,
+      content: item.content,
       link: item.link,
-      date: item.pubDate,
+      publishedAt: item.pubDate,
+      source: 'Google News',
     }));
   }
-
+  
+  async getETNews() {
+    const url = "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms";
+    
+    const feed = await this.parser.parseURL(url);
+    console.log('ET RSS Feed:', feed);
+    
+    return feed.items.map((item) => ({
+      title: item.title,
+      content: item.content,
+      link: item.link,
+      publishedAt: item.pubDate,
+      source: 'Economic Times',
+    }));
+  }
+  
   async getMarketaux() {
     const url = 'https://api.marketaux.com/v1/news/all';
     const key = '';
@@ -32,10 +59,10 @@ export class NewsService {
   }
 
   async fetchAllNews(symbol: string) {
-    const [google, marketaux] = await Promise.all([
+    const [google, et] = await Promise.all([
       this.getGoogleNews(symbol),
-      this.getMarketaux()
+      this.getETNews()
     ]);
-    return { google, marketaux };
+    return { google, et };
   }
 }

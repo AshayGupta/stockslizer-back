@@ -16,6 +16,7 @@ export class NewsController {
         throw new Error('Symbol query parameter is required');
       }
 
+      // return this.newsService.getETRss();
       return getOrSetCache(`news:${symbol}`, () => this.newsService.fetchAllNews(symbol));
     } catch (error) {
       throw new Error('Failed to fetch news', { cause: error });

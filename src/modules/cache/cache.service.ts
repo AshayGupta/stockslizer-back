@@ -1,7 +1,8 @@
 import NodeCache from "node-cache";
 
 const cache = new NodeCache({
-  stdTTL: 900
+  stdTTL: 900,
+  checkperiod: 300,
 });
 
 export async function getOrSetCache<T>(key: string, fetcher: () => Promise<T>, ttlSeconds: number = 900): Promise<T> {
