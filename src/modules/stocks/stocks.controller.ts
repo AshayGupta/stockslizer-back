@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { getOrSetCache } from '../cache/cache.service';
 import { StocksService } from './stocks.service';
-import { cache } from '../cache/cache.service';
 
 @Controller('stocks')
 export class StocksController {
@@ -16,16 +16,7 @@ export class StocksController {
         throw new Error('Symbol query parameter is required');
       }
 
-      const key = `stocks:${symbol}`;
-      const cached = cache.get(key);
-      if (cached) {
-        return cached;
-      }
-
-      const quote = await this.stockService.quote(symbol);
-      cache.set(key, quote);
-      
-      return quote;
+      return getOrSetCache(`stocks:${symbol}`, () => this.stockService.quote(symbol));
     } catch (error) {
       throw new Error('Failed to fetch stock quote', { cause: error });
     }

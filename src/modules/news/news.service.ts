@@ -31,7 +31,7 @@ export class NewsService {
     return response.data;
   }
 
-  async getAllNews(symbol: string) {
+  async fetchAllNews(symbol: string) {
     const [google, marketaux] = await Promise.all([
       this.getGoogleNews(symbol),
       this.getMarketaux()

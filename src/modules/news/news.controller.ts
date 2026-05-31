@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { getOrSetCache } from '../cache/cache.service';
 import { NewsService } from './news.service';
-import { cache } from '../cache/cache.service';
 
 @Controller('news')
 export class NewsController {
@@ -16,16 +16,7 @@ export class NewsController {
         throw new Error('Symbol query parameter is required');
       }
 
-      const key = `news:${symbol}`;
-      const cached = cache.get(key);
-      if (cached) {
-        return cached;
-      }
-
-      const news = await this.newsService.getAllNews(symbol);
-      cache.set(key, news);
-
-      return news;
+      return getOrSetCache(`news:${symbol}`, () => this.newsService.fetchAllNews(symbol));
     } catch (error) {
       throw new Error('Failed to fetch news', { cause: error });
     }
