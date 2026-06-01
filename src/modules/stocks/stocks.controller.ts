@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { getOrSetCache } from '../cache/cache.service';
+import { getOrSetCache } from '../../common/cache/cache.service';
 import { StocksService } from './stocks.service';
 
 @Controller('stocks')
