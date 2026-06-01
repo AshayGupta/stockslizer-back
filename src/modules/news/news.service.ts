@@ -25,7 +25,6 @@ export class NewsService {
       content: item.content,
       link: item.link,
       publishedAt: item.pubDate,
-      source: 'Google News',
     }));
   }
   
@@ -40,7 +39,6 @@ export class NewsService {
       content: item.content,
       link: item.link,
       publishedAt: item.pubDate,
-      source: 'Economic Times',
     }));
   }
 
@@ -58,7 +56,14 @@ export class NewsService {
     );
     console.log('FinnHub News:', response.data);
 
-    return response.data;
+    return response.data.map((item) => ({
+      title: item.headline,
+      content: item.summary,
+      link: item.url,
+      publishedAt: new Date(item.datetime * 1000).toISOString(),
+      source: item.source,
+      id: item.id,
+    }));
   }
   
   async fetchMarketaux() {
@@ -75,10 +80,10 @@ export class NewsService {
   }
 
   async fetchAllNews(symbol: string) {
-    const [google, et] = await Promise.allSettled([
+    const [googleNews, etNews] = await Promise.allSettled([
       this.fetchGoogleNews(symbol),
       this.fetchETNews()
     ]);
-    return { google, et };
+    return { googleNews, etNews };
   }
 }
