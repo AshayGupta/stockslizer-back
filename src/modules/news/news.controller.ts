@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { validateSymbol } from 'src/common/utils';
-import { getOrSetCache } from '../../common/cache/cache.service';
+import { getOrSetCache } from '../../services/cache/cache.service';
 import { NewsService } from './news.service';
 
 @Controller('news')
