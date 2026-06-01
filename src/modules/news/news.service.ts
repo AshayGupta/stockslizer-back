@@ -14,7 +14,7 @@ export class NewsService {
     timeout: 10000,
   });
 
-  async getGoogleNews(symbol: string) {
+  async fetchGoogleNews(symbol: string) {
     const url = `https://news.google.com/rss/search?q=${symbol}`;
     
     const feed = await this.parser.parseURL(url);
@@ -29,7 +29,7 @@ export class NewsService {
     }));
   }
   
-  async getETNews() {
+  async fetchETNews() {
     const url = "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms";
     
     const feed = await this.parser.parseURL(url);
@@ -43,15 +43,31 @@ export class NewsService {
       source: 'Economic Times',
     }));
   }
+
+  // Free tier: 60 API calls/minute for US stock news
+  async fetchFinnhubNews(symbol: string) {
+    const response = await axios.get('https://finnhub.io/api/v1/company-news',
+      {
+        params: {
+          symbol,
+          from: '2026-05-25',
+          to: '2026-06-01',
+          token: process.env.FINNHUB_KEY,
+        },
+      },
+    );
+    console.log('FinnHub News:', response.data);
+
+    return response.data;
+  }
   
-  async getMarketaux() {
+  async fetchMarketaux() {
     const url = 'https://api.marketaux.com/v1/news/all';
-    const key = '';
 
     const response = await axios.get(url, {
       params: {
         symbols: 'INFY',
-        api_token: key,
+        api_token: process.env.MARKETAUX_KEY,
       },
     });
 
@@ -59,9 +75,9 @@ export class NewsService {
   }
 
   async fetchAllNews(symbol: string) {
-    const [google, et] = await Promise.all([
-      this.getGoogleNews(symbol),
-      this.getETNews()
+    const [google, et] = await Promise.allSettled([
+      this.fetchGoogleNews(symbol),
+      this.fetchETNews()
     ]);
     return { google, et };
   }
