@@ -25,33 +25,32 @@ export class StocksSyncService {
   async syncAll() {
     this.logger.log('Starting NSE + BSE sync...');
 
-    const [nseStocks, bseStocks] = await Promise.all([
+    const [nseStocks] = await Promise.all([
       this.syncNSE(),
-      this.syncBSE(),
     ]);
 
-    const seenIsin = new Set<string>();
+    // const seenIsin = new Set<string>();
 
-    const allStocks = [...nseStocks, ...bseStocks].filter((stock: StockInfo) => {
-      if (!seenIsin.has(stock.isin)) {
-        seenIsin.add(stock.isin);
-        return true;
-      }
-      return false;
-    });
+    // const allStocks = [...nseStocks, ...bseStocks].filter((stock: StockInfo) => {
+    //   if (!seenIsin.has(stock.isin)) {
+    //     seenIsin.add(stock.isin);
+    //     return true;
+    //   }
+    //   return false;
+    // });
 
-    allStocks.sort((a, b) => {
+    nseStocks.sort((a, b) => {
       if (a.symbol < b.symbol) return -1;
       if (a.symbol > b.symbol) return 1;
       return 0;
     });
 
-    this.logger.log(`Sync completed. Total stocks: ${allStocks.length}`);
+    this.logger.log(`Sync completed. Total stocks: ${nseStocks.length}`);
 
-    const ttl = 60 * 60 * 24 * 2; // 2 days = 172800 seconds
-    await setCache('stocks:master', allStocks, ttl);
+    const ttl = 60 * 60 * 24 * 2;   // 2 days = 172800 seconds
+    await setCache('stocks:master', nseStocks, ttl);
 
-    return allStocks;
+    return nseStocks;
   }
 
   async syncNSE() {
@@ -77,9 +76,8 @@ export class StocksSyncService {
         .pipe(csv({mapHeaders: ({ header }) => header.trim()}))
         .on('data', (row) => {
           try {
-            console.log('row keys:', Object.keys(row));
+            this.logger.log('Stock master row keys:', Object.keys(row));
             const stock = this.normalizeRow(row, exchange) as StockInfo;
-            console.log('stock:', stock);
 
             if (stock) {
               stocks.push(stock);
