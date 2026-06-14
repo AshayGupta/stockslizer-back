@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import csv from 'csv-parser';
 import { setCache } from 'src/common/services/cache/cache.service';
 import { StockInfo } from './interface/stock-info.interface';
-import { Readable } from 'stream';
 
 @Injectable()
 export class StocksSyncService {
+  private logger = new Logger('StocksSync');
   private commonHeader = {
     'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -15,17 +15,6 @@ export class StocksSyncService {
       'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
   };
-  private bseHeader: AxiosRequestConfig = {
-    responseType: 'text',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0.0.0 Safari/537.36',
-      Accept: 'text/csv,*/*',
-      Referer: 'https://www.bseindia.com/',
-    },
-    maxRedirects: 5,
-  }
-  private logger = new Logger('StocksSync');
 
   constructor() {}
 
@@ -65,28 +54,19 @@ export class StocksSyncService {
     return allStocks;
   }
 
-  // NSE Equity master
   async syncNSE() {
     const url = 'https://archives.nseindia.com/content/equities/EQUITY_L.csv';
     // const url = 'https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv';
 
     const res = await axios.get(url, { responseType: 'stream' });
-
-          console.log('res nse -> ', res);
-
     return this.parseCSV(res.data, 'NSE');
   }
 
-  // BSE Equity master
   async syncBSE() {
     const url = 'https://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE.csv';
 
-    const res = await axios.get(url, this.bseHeader);
-              console.log('res bse -> ', res);
-
-    const stream = Readable.from([res.data]);
-
-    return this.parseCSV(stream, 'BSE');
+    const res = await axios.get(url, { responseType: 'stream' });
+    return this.parseCSV(res.data, 'BSE');
   }
 
   async parseCSV(stream: any, exchange: string): Promise<StockInfo[]> {
@@ -94,10 +74,12 @@ export class StocksSyncService {
       const stocks: StockInfo[] = [];
 
       stream
-        .pipe(csv())
+        .pipe(csv({mapHeaders: ({ header }) => header.trim()}))
         .on('data', (row) => {
           try {
+            console.log('row keys:', Object.keys(row));
             const stock = this.normalizeRow(row, exchange) as StockInfo;
+            console.log('stock:', stock);
 
             if (stock) {
               stocks.push(stock);
@@ -122,8 +104,8 @@ export class StocksSyncService {
         dateOfListing: row['DATE OF LISTING'],
         paidUpValue: row['PAID UP VALUE'],
         faceValue: row['FACE VALUE'],
-        series: row[' SERIES'],
-        active: row[' SERIES'] === 'EQ',
+        series: row['SERIES'],
+        active: row['SERIES'] === 'EQ',
         exchange,
       };
     }
