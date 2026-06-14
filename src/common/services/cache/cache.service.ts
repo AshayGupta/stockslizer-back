@@ -15,3 +15,7 @@ export async function getOrSetCache<T>(key: string, fetcher: () => Promise<T>, t
   cache.set(key, value, ttlSeconds);
   return value;
 }
+
+export const setCache = async (key: string, value: any, ttlSeconds: number = 900) => {
+  cache.set(key, value, ttlSeconds);
+}

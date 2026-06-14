@@ -5,7 +5,10 @@ import YahooFinance from 'yahoo-finance2';
 export class StocksService {
   private readonly yf = new YahooFinance();
 
-  async quote(symbol: string) {
+  async fetchQuote(symbol: string) {
     return this.yf.quote(`${symbol}.NS`);
   }
+
+  
 }
+
